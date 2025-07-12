@@ -4,34 +4,33 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
-# Download required NLTK data
-nltk.download('stopwords')
-nltk.download('wordnet')
+# Download NLTK resources if not already present
+nltk.download('stopwords', quiet=True)
+nltk.download('wordnet', quiet=True)
 
-# Load your dataset
-df = pd.read_csv("data/data.csv")  # Adjust path if needed
+# Initialize lemmatizer and stopwords
+lemmatizer = WordNetLemmatizer()
+remove_words = set(stopwords.words("english"))
 
-# Rename columns for clarity (optional)
+# Define the clean_text function
+def clean_text(text):
+    text = str(text).lower()
+    text = re.sub(r'https?://\S+', ' ', text)         # Remove URLs
+    text = re.sub(r'[0-9]', ' ', text)                # Remove numbers
+    text = re.sub(r'\W+', ' ', text)                  # Remove non-alphanumeric
+    text = re.sub(r'[_+]', ' ', text)                 # Remove underscores/pluses
+    text = re.sub(r'\s+', ' ', text)                  # Remove extra spaces
+    words = [w for w in text.split() if w not in remove_words]
+    lemmatized = [lemmatizer.lemmatize(w) for w in words]
+    return " ".join(lemmatized)
+
+# Load dataset
+df = pd.read_csv("data/data.csv")
 df = df.rename(columns={"type": "personality_type", "posts": "raw_posts"})
 
-# Combine all post segments into one cleaned text per row
-def clean_text(text):
-    if pd.isnull(text):
-        return ""
-    text = text.replace('|||', ' ')  # Replace delimiters
-    text = re.sub(r"http\S+|www\S+|https\S+", '', text)  # Remove URLs
-    text = re.sub(r'@\w+|#\w+', '', text)  # Remove mentions/hashtags
-    text = re.sub(r'[^A-Za-z\s]', '', text)  # Remove non-alphabetic
-    text = text.lower()
-    words = text.split()
-    stop_words = set(stopwords.words('english'))
-    lemmatizer = WordNetLemmatizer()
-    words = [lemmatizer.lemmatize(word) for word in words if word not in stop_words]
-    return ' '.join(words)
-
-# Apply cleaning
+# Clean posts
 df["cleaned_text"] = df["raw_posts"].apply(clean_text)
 
-# Save cleaned CSV
+# Save cleaned data
 df.to_csv("data/cleaned_data.csv", index=False)
-print("Cleaned data saved to data/cleaned_data.csv")
+print("✅ Cleaned data saved to data/cleaned_data.csv")

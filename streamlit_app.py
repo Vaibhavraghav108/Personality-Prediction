@@ -1,10 +1,10 @@
-# streamlit_app.py
 import streamlit as st
 import joblib
 
-# Load model and vectorizer
+# Load model, vectorizer, and label encoder
 model = joblib.load("model/personality_model.pkl")
 vectorizer = joblib.load("model/vectorizer.pkl")
+label_encoder = joblib.load("model/label_encoder.pkl")  # NEW
 
 # Streamlit UI
 st.title("🧠 Personality Predictor from Social Media Text")
@@ -17,4 +17,5 @@ if st.button("Predict Personality"):
     else:
         input_vec = vectorizer.transform([user_input])
         prediction = model.predict(input_vec)
-        st.success(f"🎯 Predicted Personality Type: **{prediction[0]}**")
+        predicted_label = label_encoder.inverse_transform(prediction)  # NEW
+        st.success(f"🎯 Predicted Personality Type: **{predicted_label[0]}**")
